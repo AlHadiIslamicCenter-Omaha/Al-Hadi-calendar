@@ -125,6 +125,49 @@
 .search-result{display:block;width:100%;padding:11px 14px;text-align:left;border:0;border-bottom:1px solid #f0ecea;background:#fff;cursor:pointer;font:inherit}
 .search-result:last-child{border-bottom:0}.search-result:hover{background:#fff5f5}
 .search-result-title{font-weight:800;color:#111;font-size:13px}.search-result-meta{font-size:10px;color:#777;margin-top:3px}.search-result-ar{font-size:11px;color:#a40000;margin-left:6px}.search-empty{padding:12px 14px;font-size:11px;color:#777;text-align:center}
+
+  .api-status{min-height:18px;text-align:center;color:#888;font-size:10px;margin:3px 20px 0}
+  .legend{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:9px 20px 0;font-size:10px;color:#666}
+  .legend-item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .legend-dot,.event-dot,.result-dot,.tooltip-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .legend-dot.martyrdom,.event-dot.martyrdom,.result-dot.martyrdom,.tooltip-dot.martyrdom{background:#d71920}
+  .legend-dot.birth,.event-dot.birth,.result-dot.birth,.tooltip-dot.birth{background:#2f9e44}
+  .legend-dot.occasion,.event-dot.occasion,.result-dot.occasion,.tooltip-dot.occasion{background:#e0b11a}
+  .today-indicator{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#666}
+  .today-ring{width:15px;height:15px;border-radius:50%;border:3px solid #e00000;box-shadow:0 0 0 3px rgba(224,0,0,.12);display:inline-block}
+  .event-dots{display:flex;justify-content:center;gap:4px;margin:5px 0 3px}
+  .event-dot{width:7px;height:7px}
+  .event-chip.martyrdom{border-left:3px solid #d71920}
+  .event-chip.birth{border-left:3px solid #2f9e44}
+  .event-chip.occasion{border-left:3px solid #e0b11a}
+  .tooltip-event{padding:2px 0}
+  .tooltip-title{display:flex;align-items:center;gap:6px;font-weight:800}
+  .tooltip-ar{direction:rtl;text-align:right;color:#c9a45c;font-size:11px;margin-top:2px}
+  .tooltip-desc{margin-top:4px;color:#ddd}
+  .search-wrap{position:relative;padding:18px 22px 4px;z-index:1000;overflow:visible}
+  .search-results{position:absolute;top:68px;left:50%;transform:translateX(-50%);width:min(620px,calc(100% - 44px));max-width:620px;margin:0;background:#fff;border:1px solid #e7e2df;border-radius:13px;box-shadow:0 12px 30px rgba(0,0,0,.14);overflow:hidden;display:none;z-index:9999}
+  .search-results.show{display:block}
+  .search-result{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;box-sizing:border-box;padding:10px 14px;text-align:left;border:0;border-bottom:1px solid #f0ecea;background:#fff;cursor:pointer;font:inherit}
+  .search-result:last-child{border-bottom:0}
+  .search-result:hover,.search-result:focus{background:#fff5f5;outline:none}
+  .result-dot{width:10px;height:10px}
+  .result-copy{min-width:0;display:block}
+  .search-result-title{font-weight:800;color:#111;font-size:13px;display:block}
+  .search-result-meta{font-size:10px;color:#777;margin-top:3px;display:block}
+  .search-result-ar{font-size:11px;color:#a40000;margin-left:6px;font-weight:500}
+  .search-empty{padding:12px 14px;font-size:11px;color:#777;text-align:center}
+  .day.today-day{z-index:3}
+  .day.today-day .num{width:36px!important;height:36px!important;border:3px solid #e00000;box-shadow:0 0 0 4px rgba(224,0,0,.14),0 0 0 8px rgba(224,0,0,.055),0 5px 14px rgba(224,0,0,.28);background:#111;color:#fff;font-size:15px;position:relative;z-index:2}
+  .day.today-day .hijri{margin-top:10px!important;position:relative;z-index:3;font-weight:700}
+  @media(max-width:520px){
+    .legend{gap:10px;font-size:9px}
+    .search-wrap{padding:14px 12px 3px}
+    .search-box input{height:42px}
+    .search-results{top:60px;width:calc(100% - 24px)}
+    .day.today-day .num{width:32px!important;height:32px!important}
+    .day.today-day .hijri{margin-top:9px!important}
+  }
+
 </style>
 </head>
 <body>
@@ -159,6 +202,13 @@
     </div>
     <div class="legend"><span><i class="dot"></i> Ceremony / occasion</span><span>Hover a marked date for details</span></div>
 
+    <div class="legend" aria-label="Calendar legend">
+      <span class="today-indicator"><span class="today-ring"></span> Today</span>
+      <span class="legend-item"><span class="legend-dot martyrdom"></span> Martyrdom / Death</span>
+      <span class="legend-item"><span class="legend-dot birth"></span> Birth</span>
+      <span class="legend-item"><span class="legend-dot occasion"></span> Occasion</span>
+    </div>
+    <div class="api-status" id="apiStatus"></div>
     <div class="search-wrap"><div class="search-box"><input id="eventSearch" type="search" autocomplete="off" placeholder="Search ceremonies, Imams, Eids, Ashura..." aria-label="Search ceremonies"><span class="search-icon">⌕</span></div><div class="search-results" id="searchResults"></div></div>
     <div class="grid" id="calendarGrid"></div>
 
@@ -178,220 +228,393 @@
   </main>
 </div>
 
+
 <script>
-/* -----------------------------------------------------------
-   TWELVER SHIA OCCASIONS
-   month = Hijri month (1 Muharram ... 12 Dhu al-Hijjah)
-   day   = Hijri day
-   Multiple occasions may share a date.
------------------------------------------------------------- */
-const EVENTS = [
-  {m:1,d:1,title:"Islamic New Year",ar:"رأس السنة الهجرية",desc:"Beginning of the Islamic Hijri year."},
-  {m:1,d:2,title:"Arrival in Karbala",ar:"وصول الإمام الحسين إلى كربلاء",desc:"Commemoration of Imam Husayn and his caravan reaching Karbala."},
-  {m:1,d:9,title:"Tasu'a",ar:"تاسوعاء",desc:"The ninth day of Muharram, commemorating the eve of Ashura and the loyalty of the companions of Imam Husayn."},
-  {m:1,d:10,title:"Ashura",ar:"عاشوراء",desc:"Martyrdom of Imam Husayn ibn Ali and his companions at Karbala."},
-  {m:1,d:25,title:"Martyrdom of Imam Zayn al-Abidin",ar:"شهادة الإمام زين العابدين",desc:"Commemoration of the martyrdom of Imam Ali Zayn al-Abidin, commonly observed on 25 Muharram."},
+/*
+  AL HADI ISLAMIC CENTER — DYNAMIC TWELVER SHIA CALENDAR
 
-  {m:2,d:7,title:"Martyrdom of Imam Hasan",ar:"شهادة الإمام الحسن المجتبى",desc:"Commemoration of the martyrdom of Imam Hasan al-Mujtaba; 7 Safar is a common Twelver observance."},
-  {m:2,d:20,title:"Arbaeen",ar:"الأربعين",desc:"Fortieth-day commemoration of the martyrdom of Imam Husayn. One of the largest annual Shia commemorations."},
-  {m:2,d:28,title:"Martyrdom of the Prophet & Imam Hasan",ar:"وفاة النبي وشهادة الإمام الحسن",desc:"Commemoration traditionally associated with the passing of Prophet Muhammad and the martyrdom of Imam Hasan."},
-  {m:2,d:29,title:"Martyrdom of Imam Ali al-Rida",ar:"شهادة الإمام الرضا",desc:"Commemoration commonly observed on the final days of Safar."},
+  Data source:
+  TheShia API:
+  https://theshia.org/api/v1/events
+  https://theshia.org/api/v1/hijri
 
-  {m:3,d:8,title:"Martyrdom of Imam Hasan al-Askari",ar:"شهادة الإمام الحسن العسكري",desc:"Commemoration of the martyrdom of the 11th Imam."},
-  {m:3,d:9,title:"Eid al-Zahra",ar:"عيد الزهراء",desc:"A traditional celebration observed by many Shia communities on 9 Rabi al-Awwal."},
-  {m:3,d:17,title:"Birth of Prophet Muhammad & Imam Ja'far al-Sadiq",ar:"مولد النبي والإمام الصادق",desc:"Celebration of the birth of Prophet Muhammad and, in Twelver tradition, Imam Ja'far al-Sadiq."},
+  The API supplies 73 curated Ahlul Bayt (a) events, event types,
+  multilingual titles, descriptions, and Shia/moonsighting date resolution.
 
-  {m:4,d:8,title:"Birth of Imam Hasan al-Askari",ar:"ولادة الإمام الحسن العسكري",desc:"Birth anniversary of the 11th Imam."},
-
-  {m:5,d:5,title:"Birth of Sayyida Zaynab",ar:"ولادة السيدة زينب",desc:"Birth anniversary of Sayyida Zaynab bint Ali."},
-  {m:5,d:13,title:"First Fatimiyya remembrance",ar:"أيام الفاطمية",desc:"Beginning of a commonly observed Fatimiyya mourning period associated with the first reported date of Sayyida Fatima al-Zahra's martyrdom."},
-
-  {m:6,d:3,title:"Martyrdom of Sayyida Fatima al-Zahra",ar:"شهادة السيدة فاطمة الزهراء",desc:"A commonly observed Fatimiyya date; many communities observe a mourning period around this date."},
-  {m:6,d:20,title:"Birth of Sayyida Fatima al-Zahra",ar:"ولادة السيدة فاطمة الزهراء",desc:"Birth anniversary of Sayyida Fatima al-Zahra."},
-
-  {m:7,d:1,title:"Birth of Imam Muhammad al-Baqir",ar:"ولادة الإمام الباقر",desc:"Birth anniversary of the 5th Imam."},
-  {m:7,d:2,title:"Birth of Imam Ali al-Hadi",ar:"ولادة الإمام الهادي",desc:"Birth anniversary of the 10th Imam."},
-  {m:7,d:10,title:"Birth of Imam Muhammad al-Jawad",ar:"ولادة الإمام الجواد",desc:"Birth anniversary of the 9th Imam."},
-  {m:7,d:13,title:"Birth of Imam Ali ibn Abi Talib",ar:"ولادة الإمام علي بن أبي طالب",desc:"Birth anniversary of Imam Ali, traditionally observed on 13 Rajab."},
-  {m:7,d:25,title:"Martyrdom of Imam Musa al-Kazim",ar:"شهادة الإمام الكاظم",desc:"Commemoration of the martyrdom of the 7th Imam."},
-  {m:7,d:27,title:"Mab'ath",ar:"المبعث النبوي",desc:"Commemoration of the Prophet Muhammad's appointment and beginning of revelation."},
-
-  {m:8,d:3,title:"Birth of Imam Husayn ibn Ali",ar:"ولادة الإمام الحسين",desc:"Birth anniversary of Imam Husayn."},
-  {m:8,d:4,title:"Birth of Abbas ibn Ali",ar:"ولادة أبي الفضل العباس",desc:"Birth anniversary of al-Abbas ibn Ali, the standard-bearer of Karbala."},
-  {m:8,d:5,title:"Birth of Imam Zayn al-Abidin",ar:"ولادة الإمام زين العابدين",desc:"Birth anniversary of the 4th Imam."},
-  {m:8,d:7,title:"Birth of Ali al-Akbar / Qasim",ar:"ولادات من شعبان",desc:"Sha'ban commemorations include the birth anniversaries of members of the household associated with Karbala."},
-  {m:8,d:11,title:"Birth of Ali al-Akbar",ar:"ولادة علي الأكبر",desc:"Birth anniversary traditionally associated with Ali al-Akbar ibn Imam Husayn."},
-  {m:8,d:15,title:"Birth of Imam Muhammad al-Mahdi",ar:"ولادة الإمام المهدي",desc:"Birth anniversary of Imam Muhammad al-Mahdi, the 12th Imam."},
-
-  {m:9,d:10,title:"Martyrdom of Sayyida Khadija",ar:"وفاة السيدة خديجة",desc:"Commemoration commonly observed for the passing of Sayyida Khadija."},
-  {m:9,d:15,title:"Birth of Imam Hasan ibn Ali",ar:"ولادة الإمام الحسن",desc:"Birth anniversary of Imam Hasan al-Mujtaba."},
-  {m:9,d:19,title:"Wounding of Imam Ali",ar:"ضربة الإمام علي",desc:"Commemoration of the attack on Imam Ali in Kufa."},
-  {m:9,d:21,title:"Martyrdom of Imam Ali",ar:"شهادة الإمام علي",desc:"Martyrdom anniversary of Imam Ali ibn Abi Talib."},
-  {m:9,d:23,title:"Laylat al-Qadr",ar:"ليلة القدر",desc:"A major night of worship. Many Shia communities especially emphasize the nights of 19, 21 and 23 Ramadan, with the 23rd widely regarded as especially significant."},
-
-  {m:10,d:1,title:"Eid al-Fitr",ar:"عيد الفطر",desc:"Festival marking the end of Ramadan."},
-  {m:10,d:25,title:"Martyrdom of Imam Ja'far al-Sadiq",ar:"شهادة الإمام الصادق",desc:"Martyrdom anniversary of the 6th Imam."},
-
-  {m:11,d:1,title:"Beginning of the pilgrimage season",ar:"بداية أشهر الحج",desc:"Dhu al-Qi'dah begins the sacred pilgrimage months."},
-
-  {m:12,d:9,title:"Arafah",ar:"يوم عرفة",desc:"Day of Arafah; an important day of prayer and supplication, including Dua Arafah associated with Imam Husayn."},
-  {m:12,d:10,title:"Eid al-Adha",ar:"عيد الأضحى",desc:"Festival of sacrifice."},
-  {m:12,d:18,title:"Eid al-Ghadir",ar:"عيد الغدير",desc:"Commemoration of the Prophet Muhammad's declaration at Ghadir Khumm regarding Imam Ali."},
-  {m:12,d:24,title:"Mubahala",ar:"يوم المباهلة",desc:"Commemoration of the event of Mubahala involving Prophet Muhammad and the Ahl al-Bayt."},
-  {m:12,d:25,title:"Alms / Ahl al-Bayt commemoration",ar:"يوم إطعام أهل البيت",desc:"A day associated in Islamic tradition with the episode of the Ahl al-Bayt's vow and feeding."}
-];
+  Al Hadi overrides:
+  Add center-specific date/title/description overrides to this array if needed.
+  Example:
+  {
+    date:"2026-03-20",
+    title:"Eid al-Fitr",
+    ar:"عيد الفطر",
+    type:"occasion",
+    desc:"Al Hadi Center confirmed date."
+  }
+*/
+const API_BASE="https://theshia.org/api/v1";
+const CALENDAR_MODE="moonsighting";
+const AL_HADI_OVERRIDES=[];
 
 const monthNames=["Muharram","Safar","Rabi' al-Awwal","Rabi' al-Thani","Jumada al-Awwal","Jumada al-Thani","Rajab","Sha'ban","Ramadan","Shawwal","Dhu al-Qi'dah","Dhu al-Hijjah"];
 const weekNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-function jdToGregorian(jd){
-  let z=Math.floor(jd+0.5), f=(jd+0.5)-z;
-  let a=z;
-  if(z>=2299161){let alpha=Math.floor((z-1867216.25)/36524.25);a=z+1+alpha-Math.floor(alpha/4)}
-  let b=a+1524, c=Math.floor((b-122.1)/365.25), d=Math.floor(365.25*c), e=Math.floor((b-d)/30.6001);
-  let day=b-d-Math.floor(30.6001*e)+f;
-  let month=e<14?e-1:e-13, year=month>2?c-4716:c-4715;
-  return new Date(Date.UTC(year,month-1,Math.floor(day)));
-}
-function islamicToJD(y,m,d){
-  return d + Math.ceil(29.5*(m-1)) + (y-1)*354 + Math.floor((3+11*y)/30) + 1948439.5;
-}
-function islamicToGregorian(y,m,d){
-  return jdToGregorian(islamicToJD(y,m,d));
-}
-function gregorianToIslamic(date){
-  const jd=(date.getTime()/86400000)+2440587.5;
-  const y=Math.floor((30*(jd-1948439.5)+10646)/10631);
-  let m=Math.min(12,Math.ceil((jd-(29+islamicToJD(y,1,1)))/29.5)+1);
-  if(m<1)m=1;
-  while(islamicToJD(y,m,1)>jd)m--;
-  while(m<12 && islamicToJD(y,m+1,1)<=jd)m++;
-  const d=Math.floor(jd-islamicToJD(y,m,1)+1);
-  return {y,m,d};
-}
-function browserHijri(date){
-  try{
-    const parts=new Intl.DateTimeFormat("en-u-ca-islamic",{day:"numeric",month:"long",year:"numeric"}).formatToParts(date);
-    const get=t=>parts.find(x=>x.type===t)?.value||"";
-    return `${get("day")} ${get("month")} ${get("year")}`;
-  }catch(e){return "";}
-}
-function eventFor(m,d){return EVENTS.filter(e=>e.m===m&&e.d===d)}
-function sameDate(a,b){return a.getUTCFullYear()===b.getUTCFullYear()&&a.getUTCMonth()===b.getUTCMonth()&&a.getUTCDate()===b.getUTCDate()}
+const apiCache={
+  years:new Map(),
+  hijriYears:new Map(),
+  events:new Map()
+};
 
 let view=new Date();
 view=new Date(Date.UTC(view.getUTCFullYear(),view.getUTCMonth(),1));
-const todayDate=new Date();
-todayDate.setHours(0,0,0,0);
-
+const now=new Date();
+const todayDate=new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
 
 let searchTerm="";
+let yearData={year:null,hijriMap:new Map(),events:[],loading:false,error:null};
 
-function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-function eventOccurrencesForGregorianYear(year){
-  const start=new Date(Date.UTC(year,0,1));
-  const end=new Date(Date.UTC(year,11,31));
-  const hs=gregorianToIslamic(start), he=gregorianToIslamic(end);
-  const years=[];
-  for(let hy=hs.y-1;hy<=he.y+1;hy++)years.push(hy);
-  const out=[];
-  EVENTS.forEach((e,idx)=>{
-    years.forEach(hy=>{
-      const d=islamicToGregorian(hy,e.m,e.d);
-      if(d>=start && d<=end) out.push({e,idx,date:d});
-    });
-  });
-  return out.sort((a,b)=>a.date-b.date || a.e.title.localeCompare(b.e.title));
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 }
-function eventDateLabel(d){return d.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric",timeZone:"UTC"});}
-function goToSearchResult(item){
-  view=new Date(Date.UTC(item.date.getUTCFullYear(),item.date.getUTCMonth(),1));
-  render();
-  setTimeout(()=>{
-    const targetDay=item.date.getUTCDate();
-    for(const cell of document.querySelectorAll(".day")){
-      const n=cell.querySelector(".num");
-      if(n && Number(n.textContent.trim())===targetDay && !cell.classList.contains("muted")){
-        cell.scrollIntoView({behavior:"smooth",block:"center"});
-        cell.classList.add("search-match");
-        setTimeout(()=>cell.classList.remove("search-match"),2200);
-        break;
-      }
+function isoDate(y,m,d){return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
+
+function normalizeEvent(raw){
+  const title=raw.title||{};
+  return {
+    id:raw.id,
+    hijriMonth:Number(raw.hijriMonth||0),
+    hijriDay:Number(raw.hijriDay||0),
+    hijriYear:Number(raw.hijriYear||0),
+    type:String(raw.type||"occasion").toLowerCase(),
+    importance:raw.importance||"",
+    title:typeof title==="string"?title:(title.en||"Islamic Occasion"),
+    ar:typeof title==="object"?(title.ar||""):"",
+    fa:typeof title==="object"?(title.fa||""):"",
+    ur:typeof title==="object"?(title.ur||""):"",
+    desc:(raw.details?.en||raw.description?.en||raw.detail?.en||""),
+    date:raw.gregorian||null,
+    source:raw.source||""
+  };
+}
+
+function extractArray(data,keys=[]){
+  if(Array.isArray(data))return data;
+  for(const k of keys)if(Array.isArray(data?.[k]))return data[k];
+  return [];
+}
+
+async function fetchJson(url){
+  const res=await fetch(url,{cache:"no-store"});
+  if(!res.ok)throw new Error(`API request failed (${res.status})`);
+  return await res.json();
+}
+
+async function fetchHijriYear(year){
+  if(apiCache.years.has(year))return apiCache.years.get(year);
+  const data=await fetchJson(`${API_BASE}/hijri?year=${year}&calendar=${CALENDAR_MODE}`);
+  apiCache.years.set(year,data);
+  return data;
+}
+
+function parseHijriYear(data){
+  const map=new Map();
+  const days=data?.days||data?.data?.days||{};
+  if(Array.isArray(days)){
+    for(const item of days){
+      const key=item.date||item.gregorian;
+      if(key && item.hijri)map.set(key,item.hijri);
     }
-  },100);
-  const input=document.getElementById("eventSearch"),results=document.getElementById("searchResults");
-  searchTerm=""; if(input)input.value=""; if(results){results.innerHTML="";results.classList.remove("show");}
+  }else{
+    for(const [key,val] of Object.entries(days)){
+      if(val?.hijri)map.set(key,val.hijri);
+      else if(val?.year!==undefined && val?.month!==undefined && val?.day!==undefined)map.set(key,val);
+    }
+  }
+  return map;
 }
+
+async function fetchEventsForHijriYear(hy){
+  if(!hy)return [];
+  if(apiCache.events.has(hy))return apiCache.events.get(hy);
+  const data=await fetchJson(`${API_BASE}/events?hy=${hy}&details=1&calendar=${CALENDAR_MODE}`);
+  const arr=extractArray(data,["events","data"]);
+  const events=arr.map(normalizeEvent).filter(e=>e.date);
+  apiCache.events.set(hy,events);
+  return events;
+}
+
+function overrideEvents(events){
+  const byDate=new Map();
+  events.forEach(e=>{
+    const key=e.date;
+    if(!byDate.has(key))byDate.set(key,[]);
+    byDate.get(key).push(e);
+  });
+  AL_HADI_OVERRIDES.forEach(o=>{
+    const e=normalizeEvent({
+      id:`alhadi-${o.date}-${o.title}`,
+      gregorian:o.date,
+      type:o.type||"occasion",
+      title:{en:o.title,ar:o.ar||""},
+      description:{en:o.desc||""},
+      hijriMonth:o.hijriMonth,
+      hijriDay:o.hijriDay
+    });
+    byDate.set(o.date,[e]);
+  });
+  return [...byDate.values()].flat();
+}
+
+async function loadYear(year){
+  if(yearData.year===year && !yearData.loading)return;
+  yearData={year,hijriMap:new Map(),events:[],loading:true,error:null};
+  updateStatus("Loading calendar…");
+
+  try{
+    const hijriData=await fetchHijriYear(year);
+    const hijriMap=parseHijriYear(hijriData);
+
+    const firstKey=`${year}-01-01`;
+    const lastKey=`${year}-12-31`;
+    const first=hijriMap.get(firstKey);
+    const last=hijriMap.get(lastKey);
+
+    let hyList=[first?.year,last?.year].filter(Boolean).map(Number);
+    if(!hyList.length){
+      // Safe fallback only if the API's whole-year map shape changes.
+      hyList=[new Intl.DateTimeFormat("en-u-ca-islamic",{year:"numeric"}).format(new Date(Date.UTC(year,0,1))),
+              new Intl.DateTimeFormat("en-u-ca-islamic",{year:"numeric"}).format(new Date(Date.UTC(year,11,31)))].map(Number);
+    }
+    hyList=[...new Set(hyList)];
+
+    const results=await Promise.all(hyList.map(fetchEventsForHijriYear));
+    const events=overrideEvents(results.flat().filter(e=>e.date>=firstKey && e.date<=lastKey));
+
+    yearData={year,hijriMap,events,loading:false,error:null};
+    updateStatus("");
+    render();
+  }catch(err){
+    console.error(err);
+    yearData={year,hijriMap:new Map(),events:[],loading:false,error:err};
+    updateStatus("Unable to load live Shia calendar data. Showing the calendar structure while the connection is retried.");
+    render();
+  }
+}
+
+function updateStatus(text){
+  const el=document.getElementById("apiStatus");
+  if(el)el.textContent=text;
+}
+
+function eventColorClass(type){
+  if(type==="birth")return "birth";
+  if(type==="martyrdom"||type==="death")return "martyrdom";
+  return "occasion";
+}
+
+function eventsForDate(key){
+  return yearData.events.filter(e=>e.date===key);
+}
+
+function hijriForDate(key){
+  const h=yearData.hijriMap.get(key);
+  if(h)return h;
+  return null;
+}
+
+function hijriLabel(h){
+  if(!h)return "Hijri date loading…";
+  const month=h.monthName?.en||monthNames[(Number(h.month)||1)-1]||"";
+  return `${h.day} ${month}`;
+}
+
+function monthHijriRange(year,month){
+  const first=isoDate(year,month+1,1);
+  const lastDay=new Date(Date.UTC(year,month+1,0)).getUTCDate();
+  const last=isoDate(year,month+1,lastDay);
+  const a=hijriForDate(first),b=hijriForDate(last);
+  if(!a||!b)return "Hijri dates loading…";
+  const an=a.monthName?.en||monthNames[a.month-1]||"";
+  const bn=b.monthName?.en||monthNames[b.month-1]||"";
+  return `${an} ${a.day}, ${a.year} AH — ${bn} ${b.day}, ${b.year} AH`;
+}
+
+function eventDateLabel(date){
+  const d=new Date(`${date}T00:00:00Z`);
+  return d.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric",timeZone:"UTC"});
+}
+
+function allYearSearchMatches(term){
+  return yearData.events
+    .filter(e=>`${e.title} ${e.ar} ${e.desc}`.toLowerCase().includes(term))
+    .sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title))
+    .slice(0,12);
+}
+
 function updateSearchResults(){
   const input=document.getElementById("eventSearch"),results=document.getElementById("searchResults");
   if(!input||!results)return;
-  const term=input.value.trim().toLowerCase();
-  searchTerm=term;
-  if(!term){results.innerHTML="";results.classList.remove("show");applySearch();return;}
-  const matches=eventOccurrencesForGregorianYear(view.getUTCFullYear()).filter(x=>`${x.e.title} ${x.e.ar||""} ${x.e.desc||""}`.toLowerCase().includes(term)).slice(0,10);
-  if(!matches.length){results.innerHTML='<div class="search-empty">No ceremonies found in this year</div>';results.classList.add("show");return;}
-  results.innerHTML=matches.map((x,i)=>`<button class="search-result" type="button" data-search-index="${i}"><div class="search-result-title">${escapeHtml(x.e.title)}${x.e.ar?`<span class="search-result-ar">${escapeHtml(x.e.ar)}</span>`:""}</div><div class="search-result-meta">${escapeHtml(eventDateLabel(x.date))}</div></button>`).join("");
-  results.querySelectorAll(".search-result").forEach((btn,i)=>btn.addEventListener("click",()=>goToSearchResult(matches[i])));
+  searchTerm=input.value.trim().toLowerCase();
+
+  if(!searchTerm){
+    results.innerHTML="";
+    results.classList.remove("show");
+    applySearch();
+    return;
+  }
+
+  if(yearData.loading){
+    results.innerHTML='<div class="search-empty">Loading ceremonies…</div>';
+    results.classList.add("show");
+    return;
+  }
+
+  const matches=allYearSearchMatches(searchTerm);
+  if(!matches.length){
+    results.innerHTML='<div class="search-empty">No ceremonies found in this year</div>';
+    results.classList.add("show");
+    return;
+  }
+
+  results.innerHTML=matches.map((e,i)=>{
+    const c=eventColorClass(e.type);
+    return `<button class="search-result" type="button" data-index="${i}">
+      <span class="result-dot ${c}"></span>
+      <span class="result-copy">
+        <span class="search-result-title">${escapeHtml(e.title)}${e.ar?`<span class="search-result-ar">${escapeHtml(e.ar)}</span>`:""}</span>
+        <span class="search-result-meta">${escapeHtml(eventDateLabel(e.date))}</span>
+      </span>
+    </button>`;
+  }).join("");
+
+  results.querySelectorAll(".search-result").forEach((btn,i)=>{
+    btn.addEventListener("click",()=>goToSearchResult(matches[i]));
+  });
   results.classList.add("show");
 }
-function applySearch(){
-  const term=searchTerm.trim().toLowerCase(),cells=document.querySelectorAll(".day");
-  cells.forEach(cell=>{cell.classList.remove("search-match","search-hidden");if(!term)return;const eventData=[...cell.querySelectorAll(".event-chip")].map(x=>x.dataset.search||"").join(" ");const matched=`${cell.textContent} ${eventData}`.toLowerCase().includes(term);if(matched)cell.classList.add("search-match");else cell.classList.add("search-hidden")});
+
+function goToSearchResult(e){
+  const d=new Date(`${e.date}T00:00:00Z`);
+  view=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),1));
+  searchTerm="";
+  const input=document.getElementById("eventSearch");
+  if(input)input.value="";
+  const results=document.getElementById("searchResults");
+  if(results){results.innerHTML="";results.classList.remove("show");}
+
+  render();
+  setTimeout(()=>{
+    const cell=document.querySelector(`.day[data-date="${e.date}"]`);
+    if(cell){
+      cell.scrollIntoView({behavior:"smooth",block:"center"});
+      cell.classList.add("search-match");
+      setTimeout(()=>cell.classList.remove("search-match"),2200);
+    }
+  },80);
 }
+
+function applySearch(){
+  const term=searchTerm.trim().toLowerCase();
+  document.querySelectorAll(".day").forEach(cell=>{
+    cell.classList.remove("search-match","search-hidden");
+    if(!term)return;
+    const matched=`${cell.textContent} ${(cell.dataset.events||"")}`.toLowerCase().includes(term);
+    if(matched)cell.classList.add("search-match");
+    else cell.classList.add("search-hidden");
+  });
+}
+
 function render(){
-  const y=view.getUTCFullYear(), mo=view.getUTCMonth();
+  const y=view.getUTCFullYear(),mo=view.getUTCMonth();
   document.getElementById("monthName").textContent=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric",timeZone:"UTC"}).format(view);
-
-  const first=new Date(Date.UTC(y,mo,1));
-  const last=new Date(Date.UTC(y,mo+1,0));
-  const firstHijri=gregorianToIslamic(first), lastHijri=gregorianToIslamic(last);
-  document.getElementById("hijriRange").textContent=
-    `${monthNames[firstHijri.m-1]} ${firstHijri.d}, ${firstHijri.y} AH — ${monthNames[lastHijri.m-1]} ${lastHijri.d}, ${lastHijri.y} AH`;
-
+  document.getElementById("hijriRange").textContent=monthHijriRange(y,mo);
   const grid=document.getElementById("calendarGrid");
   grid.innerHTML="";
   weekNames.forEach(w=>{const el=document.createElement("div");el.className="dow";el.textContent=w;grid.appendChild(el)});
 
+  const first=new Date(Date.UTC(y,mo,1));
+  const last=new Date(Date.UTC(y,mo+1,0));
   const start=first.getUTCDay();
   const total=Math.ceil((start+last.getUTCDate())/7)*7;
 
   for(let i=0;i<total;i++){
     const d=new Date(Date.UTC(y,mo,1-start+i));
-    const cell=document.createElement("div");cell.className="day";
+    const key=isoDate(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate());
+    const cell=document.createElement("div");
+    cell.className="day";
+    cell.dataset.date=key;
     if(d.getUTCMonth()!==mo)cell.classList.add("muted");
 
-    const ih=gregorianToIslamic(d);
-    const ev=eventFor(ih.m,ih.d);
+    const h=hijriForDate(key);
+    const ev=eventsForDate(key);
     if(ev.length)cell.classList.add("has-event");
-    if(sameDate(new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()),todayDate))cell.classList.add("today-day");
+    if(key===isoDate(todayDate.getUTCFullYear(),todayDate.getUTCMonth()+1,todayDate.getUTCDate()))cell.classList.add("today-day");
+
+    const eventSearchText=ev.map(e=>`${e.title} ${e.ar} ${e.desc}`).join(" ");
+    cell.dataset.events=eventSearchText;
 
     cell.innerHTML=`<div class="num">${d.getUTCDate()}</div>
-      <div class="hijri">${ih.d} ${monthNames[ih.m-1]}</div>`;
-
-    ev.forEach(e=>{
-      const chip=document.createElement("div");
-      chip.className="event-chip";
-      chip.textContent=e.title;
-      chip.dataset.search=`${e.title} ${e.ar||""} ${e.desc||""}`;
-      cell.appendChild(chip);
-    });
+      <div class="hijri">${escapeHtml(hijriLabel(h))}</div>`;
 
     if(ev.length){
-      const tip=document.createElement("div");tip.className="tooltip";
-      tip.innerHTML=ev.map(e=>`<div><b>${e.title}</b><span>${e.ar}</span><br>${e.desc}</div>`).join("<hr style='border:0;border-top:1px solid #333;margin:9px 0'>");
+      const dots=document.createElement("div");
+      dots.className="event-dots";
+      ev.forEach(e=>{
+        const dot=document.createElement("span");
+        dot.className=`event-dot ${eventColorClass(e.type)}`;
+        dot.title=e.title;
+        dots.appendChild(dot);
+      });
+      cell.appendChild(dots);
+
+      ev.forEach(e=>{
+        const chip=document.createElement("div");
+        chip.className=`event-chip ${eventColorClass(e.type)}`;
+        chip.textContent=e.title;
+        cell.appendChild(chip);
+      });
+
+      const tip=document.createElement("div");
+      tip.className="tooltip";
+      tip.innerHTML=ev.map(e=>`
+        <div class="tooltip-event">
+          <div class="tooltip-title"><span class="tooltip-dot ${eventColorClass(e.type)}"></span>${escapeHtml(e.title)}</div>
+          ${e.ar?`<div class="tooltip-ar">${escapeHtml(e.ar)}</div>`:""}
+          ${e.desc?`<div class="tooltip-desc">${escapeHtml(e.desc)}</div>`:""}
+        </div>`).join("<hr>");
       cell.appendChild(tip);
     }
     grid.appendChild(cell);
   }
   applySearch();
 }
-document.getElementById("prev").onclick=()=>{view=new Date(Date.UTC(view.getUTCFullYear(),view.getUTCMonth()-1,1));render()};
-document.getElementById("next").onclick=()=>{view=new Date(Date.UTC(view.getUTCFullYear(),view.getUTCMonth()+1,1));render()};
-document.getElementById("today").onclick=()=>{view=new Date(Date.UTC(todayDate.getFullYear(),todayDate.getMonth(),1));render()};
+
+async function changeMonth(delta){
+  const target=new Date(Date.UTC(view.getUTCFullYear(),view.getUTCMonth()+delta,1));
+  view=target;
+  await loadYear(target.getUTCFullYear());
+  render();
+}
+
+document.getElementById("prev").onclick=()=>changeMonth(-1);
+document.getElementById("next").onclick=()=>changeMonth(1);
+document.getElementById("today").onclick=async()=>{
+  view=new Date(Date.UTC(todayDate.getUTCFullYear(),todayDate.getUTCMonth(),1));
+  await loadYear(view.getUTCFullYear());
+  render();
+};
 document.getElementById("calendarType").onchange=render;
 document.getElementById("eventSearch").addEventListener("input",updateSearchResults);
-document.addEventListener("click",e=>{const wrap=document.querySelector(".search-wrap"),results=document.getElementById("searchResults");if(wrap&&results&&!wrap.contains(e.target))results.classList.remove("show")});
-render();
+document.getElementById("eventSearch").addEventListener("focus",()=>{
+  if(searchTerm)updateSearchResults();
+});
+document.addEventListener("click",e=>{
+  const wrap=document.querySelector(".search-wrap"),results=document.getElementById("searchResults");
+  if(wrap&&results&&!wrap.contains(e.target))results.classList.remove("show");
+});
+
+loadYear(view.getUTCFullYear());
 </script>
+
 </body>
 </html>
