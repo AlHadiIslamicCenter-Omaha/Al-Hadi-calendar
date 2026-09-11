@@ -73,15 +73,24 @@
   .day.has-event{
     background:linear-gradient(180deg,#fff8f8 0%,#fff 62%);
   }
+  .day.has-event.event-birth{background:linear-gradient(180deg,#f2fbf4 0%,#fff 62%)}
+  .day.has-event.event-martyrdom{background:linear-gradient(180deg,#fff3f3 0%,#fff 62%)}
+  .day.has-event.event-occasion{background:linear-gradient(180deg,#fffaf0 0%,#fff 62%)}
   .day.has-event:before{
-    content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--red);
+    content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#d71920;
     border-radius:4px 0 0 4px;
   }
+  .day.has-event.event-birth:before{background:#2f9e44}
+  .day.has-event.event-martyrdom:before{background:#d71920}
+  .day.has-event.event-occasion:before{background:#e0b11a}
   .event-chip{
-    margin-top:9px;padding:7px 8px;border-radius:9px;background:#fff0f0;
-    color:#a40000;font-size:10.5px;font-weight:750;line-height:1.25;
-    border:1px solid #ffd8d8;
+    margin-top:9px;padding:7px 8px;border-radius:9px;
+    font-size:10.5px;font-weight:750;line-height:1.25;
+    border:1px solid transparent;
   }
+  .event-chip.martyrdom{background:#fff0f0;color:#a40000;border-color:#ffd0d0}
+  .event-chip.birth{background:#eef9f0;color:#247536;border-color:#c9e8cf}
+  .event-chip.occasion{background:#fff8df;color:#8b6a08;border-color:#f1dfa0}
   .event-chip + .event-chip{margin-top:5px}
   .tooltip{
     position:absolute;z-index:30;left:10px;right:10px;top:74px;
@@ -114,7 +123,10 @@
     .wrap{padding:18px 9px 35px}.toolbar{padding:14px}
     .month-title strong{font-size:23px}.today{padding:9px}
     .day{min-height:75px}.event-chip{display:none}
-    .day.has-event .num:after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin-left:4px;vertical-align:middle}
+    .day.has-event .num:after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;margin-left:4px;vertical-align:middle}
+    .day.has-event.event-birth .num:after{background:#2f9e44}
+    .day.has-event.event-martyrdom .num:after{background:#d71920}
+    .day.has-event.event-occasion .num:after{background:#e0b11a}
     .tooltip{left:5px;right:5px;top:50px}
   }
 
@@ -617,7 +629,13 @@ function render(){
 
     const h=hijriForDate(key);
     const ev=eventsForDate(key);
-    if(ev.length)cell.classList.add("has-event");
+    if(ev.length){
+      cell.classList.add("has-event");
+      const priority={martyrdom:3,birth:2,occasion:1};
+      const dominant=ev.reduce((best,e)=>eventColorClass(e.type),"occasion");
+      const dominantClass=ev.some(e=>eventColorClass(e.type)==="martyrdom")?"martyrdom":ev.some(e=>eventColorClass(e.type)==="birth")?"birth":"occasion";
+      cell.classList.add(`event-${dominantClass}`);
+    }
     if(key===isoDate(todayDate.getUTCFullYear(),todayDate.getUTCMonth()+1,todayDate.getUTCDate()))cell.classList.add("today-day");
 
     const eventSearchText=ev.map(e=>`${e.title} ${e.ar} ${e.desc}`).join(" ");
