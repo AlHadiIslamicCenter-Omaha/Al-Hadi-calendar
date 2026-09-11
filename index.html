@@ -122,7 +122,7 @@
   @media(max-width:520px){
     .wrap{padding:18px 9px 35px}.toolbar{padding:14px}
     .month-title strong{font-size:23px}.today{padding:9px}
-    .day{min-height:75px}.event-chip{display:none}
+    .day{min-height:75px}.event-chip{display:block;font-size:8px;line-height:1.15;padding:4px 3px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}.event-chip-secondary{display:none!important}
     .day.has-event .num:after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;margin-left:4px;vertical-align:middle}
     .day.has-event.event-birth .num:after{background:#2f9e44}
     .day.has-event.event-martyrdom .num:after{background:#d71920}
@@ -675,7 +675,7 @@ function render(){
 
       ev.forEach(e=>{
         const chip=document.createElement("div");
-        chip.className=`event-chip ${eventColorClass(e.type)}`;
+        chip.className=`event-chip ${eventColorClass(e.type)} ${ev.indexOf(e)===0?"event-chip-primary":"event-chip-secondary"}`;
         chip.textContent=e.title;
         cell.appendChild(chip);
       });
