@@ -168,6 +168,37 @@
     .day.today-day .hijri{margin-top:9px!important}
   }
 
+  /* Mobile event details modal */
+  .mobile-event-modal{
+    display:none;position:fixed;inset:0;z-index:100000;
+    align-items:flex-end;justify-content:center;
+    background:rgba(0,0,0,.58);padding:16px;
+  }
+  .mobile-event-modal.open{display:flex}
+  .mobile-event-card{
+    width:min(100%,520px);max-height:min(78vh,620px);overflow:auto;
+    background:#fff;border-radius:22px 22px 16px 16px;
+    box-shadow:0 -10px 40px rgba(0,0,0,.28);
+    padding:24px 20px 22px;position:relative;
+    animation:mobileEventUp .2s ease-out;
+  }
+  @keyframes mobileEventUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .mobile-event-close{
+    position:absolute;right:14px;top:12px;width:34px;height:34px;
+    border-radius:50%;background:#f2f1ef;color:#333;font-size:22px;
+    line-height:1;display:flex;align-items:center;justify-content:center;
+  }
+  .mobile-event-heading{padding-right:42px;margin:0 0 5px;font:600 23px Georgia,serif;color:#111;line-height:1.2}
+  .mobile-event-date{font-size:12px;color:#777;margin-bottom:14px}
+  .mobile-event-item{padding:14px 0;border-top:1px solid #ece9e6}
+  .mobile-event-item:first-child{border-top:0;padding-top:4px}
+  .mobile-event-title{display:flex;align-items:flex-start;gap:8px;font-weight:800;font-size:15px;line-height:1.35;color:#111}
+  .mobile-event-title .tooltip-dot{margin-top:4px}
+  .mobile-event-ar{direction:rtl;text-align:right;color:#a47d35;font-size:14px;margin-top:6px;line-height:1.5}
+  .mobile-event-desc{margin-top:8px;color:#444;font-size:14px;line-height:1.7;white-space:normal;overflow-wrap:anywhere}
+  body.modal-open{overflow:hidden}
+  @media(min-width:521px){.mobile-event-modal{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -200,8 +231,6 @@
         </select>
       </div>
     </div>
-    <div class="legend"><span>Hover a marked date for details</span></div>
-
     <div class="legend" aria-label="Calendar legend">
       <span class="today-indicator"><span class="today-ring"></span> Today</span>
       <span class="legend-item"><span class="legend-dot martyrdom"></span> Martyrdom / Death</span>
@@ -228,6 +257,16 @@
   </main>
 </div>
 
+
+
+<div class="mobile-event-modal" id="mobileEventModal" aria-hidden="true">
+  <div class="mobile-event-card" role="dialog" aria-modal="true" aria-labelledby="mobileEventHeading">
+    <button class="mobile-event-close" id="mobileEventClose" type="button" aria-label="Close event details">×</button>
+    <h2 class="mobile-event-heading" id="mobileEventHeading">Event details</h2>
+    <div class="mobile-event-date" id="mobileEventDate"></div>
+    <div id="mobileEventContent"></div>
+  </div>
+</div>
 
 <script>
 /*
@@ -524,6 +563,35 @@ function applySearch(){
   });
 }
 
+function openMobileEventDetails(events,key){
+  if(!window.matchMedia || !window.matchMedia("(max-width:520px)").matches)return;
+  const modal=document.getElementById("mobileEventModal");
+  const content=document.getElementById("mobileEventContent");
+  const heading=document.getElementById("mobileEventHeading");
+  const dateEl=document.getElementById("mobileEventDate");
+  if(!modal||!content||!heading||!dateEl)return;
+
+  heading.textContent=events.length===1?events[0].title:"Event details";
+  dateEl.textContent=eventDateLabel(key);
+  content.innerHTML=events.map(e=>`
+    <div class="mobile-event-item">
+      <div class="mobile-event-title"><span class="tooltip-dot ${eventColorClass(e.type)}"></span><span>${escapeHtml(e.title)}</span></div>
+      ${e.ar?`<div class="mobile-event-ar">${escapeHtml(e.ar)}</div>`:""}
+      ${e.desc?`<div class="mobile-event-desc">${escapeHtml(e.desc)}</div>`:""}
+    </div>`).join("");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  document.body.classList.add("modal-open");
+}
+
+function closeMobileEventDetails(){
+  const modal=document.getElementById("mobileEventModal");
+  if(!modal)return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+  document.body.classList.remove("modal-open");
+}
+
 function render(){
   const y=view.getUTCFullYear(),mo=view.getUTCMonth();
   document.getElementById("monthName").textContent=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric",timeZone:"UTC"}).format(view);
@@ -552,6 +620,9 @@ function render(){
 
     const eventSearchText=ev.map(e=>`${e.title} ${e.ar} ${e.desc}`).join(" ");
     cell.dataset.events=eventSearchText;
+    if(ev.length){
+      cell.addEventListener("click",()=>openMobileEventDetails(ev,key));
+    }
 
     cell.innerHTML=`<div class="num">${d.getUTCDate()}</div>
       <div class="hijri">${escapeHtml(hijriLabel(h))}</div>`;
@@ -612,6 +683,11 @@ document.addEventListener("click",e=>{
   const wrap=document.querySelector(".search-wrap"),results=document.getElementById("searchResults");
   if(wrap&&results&&!wrap.contains(e.target))results.classList.remove("show");
 });
+document.getElementById("mobileEventClose").addEventListener("click",closeMobileEventDetails);
+document.getElementById("mobileEventModal").addEventListener("click",e=>{
+  if(e.target.id==="mobileEventModal")closeMobileEventDetails();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMobileEventDetails();});
 
 loadYear(view.getUTCFullYear());
 </script>
