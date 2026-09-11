@@ -792,5 +792,42 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMobileEventDeta
 loadYear(view.getUTCFullYear());
 </script>
 
+
+<script>
+(function(){
+  function sendCalendarHeight(){
+    var height=Math.max(
+      document.documentElement.scrollHeight,
+      document.body ? document.body.scrollHeight : 0,
+      document.documentElement.offsetHeight,
+      document.body ? document.body.offsetHeight : 0
+    );
+    window.parent.postMessage({type:'al-hadi-calendar-height', height:height}, '*');
+  }
+  var scheduled=false;
+  function scheduleHeight(){
+    if(scheduled) return;
+    scheduled=true;
+    requestAnimationFrame(function(){
+      scheduled=false;
+      sendCalendarHeight();
+    });
+  }
+  window.addEventListener('load', function(){
+    sendCalendarHeight();
+    setTimeout(sendCalendarHeight, 250);
+    setTimeout(sendCalendarHeight, 1000);
+  });
+  window.addEventListener('resize', scheduleHeight);
+  if(window.ResizeObserver){
+    new ResizeObserver(scheduleHeight).observe(document.body);
+  }
+  new MutationObserver(scheduleHeight).observe(document.body,{subtree:true,childList:true,attributes:true});
+  window.addEventListener('message', function(e){
+    if(e.data && e.data.type==='al-hadi-calendar-request-height') sendCalendarHeight();
+  });
+})();
+</script>
+
 </body>
 </html>
