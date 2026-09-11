@@ -91,6 +91,7 @@
   }
   .day.has-event:hover .tooltip{opacity:1;transform:translateY(0)}
   .tooltip b{color:#ff5a5a;display:block;margin-bottom:4px;font-size:12px}
+  .interaction-note{display:block!important;visibility:visible!important;opacity:1!important;margin:12px 22px 0;text-align:center;color:#888;font-size:11px;line-height:1.5}
   .details{
     display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:24px 22px;
     border-top:1px solid var(--line);
@@ -172,7 +173,7 @@
   .mobile-event-modal{
     display:none;position:fixed;inset:0;z-index:100000;
     align-items:flex-end;justify-content:center;
-    background:rgba(0,0,0,.58);padding:16px;
+    background:rgba(246,245,243,.99);padding:16px;
   }
   .mobile-event-modal.open{display:flex}
   .mobile-event-card{
@@ -230,9 +231,8 @@
           <option value="browser">Browser Islamic calendar</option>
         </select>
       </div>
-      <div class="legend">
-        <span>Hover or press on a marked date for details</span>
     </div>
+    <div class="interaction-note" role="note">Hover or press on a marked date for details.</div>
     <div class="legend" aria-label="Calendar legend">
       <span class="today-indicator"><span class="today-ring"></span> Today</span>
       <span class="legend-item"><span class="legend-dot martyrdom"></span> Martyrdom / Death</span>
