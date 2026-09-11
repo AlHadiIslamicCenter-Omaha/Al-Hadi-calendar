@@ -216,6 +216,71 @@
   body.modal-open{overflow:hidden}
   @media(min-width:521px){.mobile-event-modal{display:none!important}}
 
+
+  /* Embedded/mobile safety: prevent GoDaddy iframe clipping and horizontal overflow */
+  html, body {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow-x:hidden;
+  }
+  .wrap, .calendar, header, .grid, .toolbar, .details {
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+  .grid {
+    grid-template-columns:repeat(7, minmax(0, 1fr));
+  }
+  .day, .dow, .event-chip, .event-chip * {
+    min-width:0;
+  }
+  .day {
+    /* Keep the date cell open so desktop hover descriptions are not clipped. */
+    overflow:visible;
+  }
+  .event-chip {
+    max-width:100%;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+    word-break:normal;
+  }
+  @media (max-width:760px) {
+    .wrap { padding-left:10px; padding-right:10px; }
+    header {
+      gap:14px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    header > div { min-width:0; flex:1 1 0; }
+    .subtitle { max-width:100%; overflow-wrap:anywhere; }
+    .toolbar { gap:10px; }
+    .month-title { min-width:0; }
+  }
+  @media (max-width:520px) {
+    .wrap { padding-left:8px; padding-right:8px; }
+    header {
+      min-height:132px;
+      padding-top:4px;
+      padding-bottom:12px;
+    }
+    .logo { flex:0 0 92px; width:100px; height:100px; }
+    h1 { font-size:29px; }
+    .subtitle { font-size:12px; line-height:1.45; }
+    .toolbar { padding:12px 10px; }
+    .day { padding:6px 4px; }
+    /* Mobile uses the full-screen event panel instead of tiny hover tooltips. */
+    .tooltip { display:none !important; }
+    .event-chip {
+      max-width:100%;
+      font-size:8px;
+      padding-left:3px;
+      padding-right:3px;
+      white-space:normal;
+      overflow-wrap:anywhere;
+    }
+  }
+
 </style>
 </head>
 <body>
